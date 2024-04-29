@@ -101,6 +101,10 @@ def parse_args():
     parser.add_argument(
         "--debug", action="store_true", help="Take only 5 images in each directory"
     )
+    # TODO
+    # parser.add_argument(
+    #     "--balanced", action="store_true", help="Create directories with the same image count"
+    # )
     return parser.parse_args()
 
 

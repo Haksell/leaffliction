@@ -1,7 +1,10 @@
+import argparse
 import os
 import random
+import shutil
 import sys
 from PIL import Image, ImageEnhance, ImageFilter
+
 
 FLIPS = list(Image.Transpose)
 
@@ -47,30 +50,66 @@ def blur(img):
 
 
 AUGMENTATIONS = [flip, rotate, zoom, contrast, brightness, blur]
+AUGMENTED_PREFIX = "augmented_"
 
 
-def save(img, path, type):
+def save(img, path, augmentation, *, top_level):
     name, ext = os.path.splitext(path)
-    img.save(f"{name}_{type}{ext}")
+    path = f"{name}_{augmentation or 'original'}{ext}"
+    if not top_level:
+        path = AUGMENTED_PREFIX + path
+    img.save(path)
+    print(f'Transformation saved to "{path}"')
 
 
-def augment(img, path):
-    for augmentation in AUGMENTATIONS:
-        save(augmentation(img), path, augmentation.__name__)
-
-
-def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: python {sys.argv[0]} <image>")
-        sys.exit(1)
-    path = sys.argv[1]
+def augment_file(path, *, top_level):
     try:
         with Image.open(path) as img:
             img.verify()
         with Image.open(path) as img:
-            augment(img, path)
+            for augmentation in AUGMENTATIONS:
+                save(
+                    augmentation(img), path, augmentation.__name__, top_level=top_level
+                )
+            if not top_level:
+                save(img, path, None, top_level=top_level)
     except (IOError, SyntaxError) as e:
         print(f"Error loading image {path}: {e}")
+        sys.exit(1)
+
+
+def augment_directory(path, *, debug_mode, top_level):
+    if os.path.isfile(path):
+        augment_file(path, top_level=top_level)
+        return
+    augmented_path = AUGMENTED_PREFIX + path
+    shutil.rmtree(augmented_path, ignore_errors=True)
+    os.mkdir(augmented_path)
+    files = os.listdir(path)
+    random.shuffle(files)
+    for file in files[:5] if debug_mode else files:
+        augment_directory(
+            os.path.join(path, file), debug_mode=debug_mode, top_level=False
+        )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "path", type=str, help="Path of the file or directory to augment"
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Take only 5 images in each directory"
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    if os.path.exists(args.path):
+        augment_directory(args.path, debug_mode=args.debug, top_level=True)
+    else:
+        print(f"File not found: {args.path}")
         sys.exit(1)
 
 

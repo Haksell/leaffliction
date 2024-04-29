@@ -47,7 +47,7 @@ def create_chart(storage):
 
 def main():
     if len(sys.argv) != 2:
-        print(f"Usage: python {sys.argv[0]} <directory>")
+        print(f"Usage: python {sys.argv[0]} directory")
         sys.exit(1)
     create_chart(count_pics(sys.argv[1]))
 

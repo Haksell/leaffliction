@@ -43,7 +43,7 @@ def brightness(img):
 
 
 def blur(img):
-    return img.filter(ImageFilter.GaussianBlur(random.uniform(0.5, 3)))
+    return img.filter(ImageFilter.GaussianBlur(random.uniform(0.5, 2.5)))
 
 
 AUGMENTATIONS = [flip, rotate, zoom, contrast, brightness, blur]

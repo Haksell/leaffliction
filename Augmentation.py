@@ -3,9 +3,11 @@ import random
 import sys
 from PIL import Image, ImageEnhance, ImageFilter
 
+FLIPS = list(Image.Transpose)
+
 
 def flip(img):
-    return img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img.transpose(random.choice(FLIPS))
 
 
 def rotate(img):

@@ -6,7 +6,7 @@ import sys
 from PIL import Image, ImageEnhance, ImageFilter
 
 
-DEBUG_QUANTITY = 5
+DEBUG_PERCENTAGE = 1
 FLIPS = list(Image.Transpose)
 
 
@@ -86,12 +86,16 @@ def augment_directory(path, *, debug_mode, top_level):
     augmented_path = AUGMENTED_PREFIX + path
     shutil.rmtree(augmented_path, ignore_errors=True)
     os.mkdir(augmented_path)
-    files = os.listdir(path)
+    files = [os.path.join(path, file) for file in os.listdir(path)]
     random.shuffle(files)
-    for file in files[:DEBUG_QUANTITY] if debug_mode else files:
-        augment_directory(
-            os.path.join(path, file), debug_mode=debug_mode, top_level=False
-        )
+    num_files = sum(map(os.path.isfile, files))
+    remaining_files = round(num_files * DEBUG_PERCENTAGE / 100)
+    for file in files:
+        if debug_mode and os.path.isfile(file):
+            if remaining_files == 0:
+                continue
+            remaining_files -= 1
+        augment_directory(file, debug_mode=debug_mode, top_level=False)
 
 
 def parse_args():
@@ -102,7 +106,7 @@ def parse_args():
     parser.add_argument(
         "--debug",
         action="store_true",
-        help=f"Take only {DEBUG_QUANTITY} images in each directory",
+        help=f"Take only {DEBUG_PERCENTAGE}%% of images in each directory",
     )
     parser.add_argument(
         "--balanced",

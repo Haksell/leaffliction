@@ -86,16 +86,15 @@ def augment_directory(path, *, debug, balanced, top_level):
     augmented_path = AUGMENTED_PREFIX + path
     shutil.rmtree(augmented_path, ignore_errors=True)
     os.mkdir(augmented_path)
-    files = [os.path.join(path, file) for file in os.listdir(path)]
-    random.shuffle(files)
-    num_files = sum(map(os.path.isfile, files))
-    remaining_files = round(num_files * DEBUG_PERCENTAGE / 100)
-    for file in files:
-        if debug and os.path.isfile(file):
-            if remaining_files == 0:
-                continue
-            remaining_files -= 1
-        augment_directory(file, debug=debug, balanced=balanced, top_level=False)
+    paths = [os.path.join(path, file) for file in os.listdir(path)]
+    assert paths, f"{path} is empty"
+    all_files = all(map(os.path.isfile, paths))
+    all_dirs = all(map(os.path.isdir, paths))
+    assert all_files or all_dirs, f"{path} contains both files and directories"
+    if debug and all_files:
+        paths = random.sample(paths, k=round(len(paths) * DEBUG_PERCENTAGE / 100))
+    for path in paths:
+        augment_directory(path, debug=debug, balanced=balanced, top_level=False)
 
 
 def parse_args():

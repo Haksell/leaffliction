@@ -1,4 +1,5 @@
 import argparse
+from itertools import product
 import os
 import random
 import shutil
@@ -6,7 +7,7 @@ import sys
 from PIL import Image, ImageEnhance, ImageFilter
 
 
-DEBUG_PERCENTAGE = 1
+DEBUG_PERCENTAGE = 2
 FLIPS = list(Image.Transpose)
 
 
@@ -50,51 +51,83 @@ def blur(img):
     return img.filter(ImageFilter.GaussianBlur(random.uniform(0.5, 2.5)))
 
 
+def original(img):
+    return img
+
+
 AUGMENTATIONS = [flip, rotate, zoom, contrast, brightness, blur]
 AUGMENTED_PREFIX = "augmented_"
 
 
-def save(img, path, augmentation, *, top_level):
+def save(img, path, augmentation, *, single_file):
     name, ext = os.path.splitext(path)
-    path = f"{name}_{augmentation or 'original'}{ext}"
-    if not top_level:
+    path = f"{name}_{augmentation}{ext}"
+    if not single_file:
         path = AUGMENTED_PREFIX + path
     img.save(path)
     print(f'Transformation saved to "{path}"')
 
 
-def augment_file(path, *, top_level):
+def augment_file(path, augmentations):
+    single_file = original not in augmentations
     try:
         with Image.open(path) as img:
             img.verify()
         with Image.open(path) as img:
-            for augmentation in AUGMENTATIONS:
+            for augmentation in augmentations:
                 save(
-                    augmentation(img), path, augmentation.__name__, top_level=top_level
+                    augmentation(img),
+                    path,
+                    augmentation.__name__,
+                    single_file=single_file,
                 )
-            if not top_level:
-                save(img, path, None, top_level=top_level)
     except (IOError, SyntaxError) as e:
         print(f"Error loading image {path}: {e}")
         sys.exit(1)
 
 
-def augment_directory(path, *, debug, balanced, top_level):
-    if os.path.isfile(path):
-        augment_file(path, top_level=top_level)
-        return
-    augmented_path = AUGMENTED_PREFIX + path
-    shutil.rmtree(augmented_path, ignore_errors=True)
-    os.mkdir(augmented_path)
-    paths = [os.path.join(path, file) for file in os.listdir(path)]
-    assert paths, f"{path} is empty"
-    all_files = all(map(os.path.isfile, paths))
-    all_dirs = all(map(os.path.isdir, paths))
-    assert all_files or all_dirs, f"{path} contains both files and directories"
-    if debug and all_files:
-        paths = random.sample(paths, k=round(len(paths) * DEBUG_PERCENTAGE / 100))
-    for path in paths:
-        augment_directory(path, debug=debug, balanced=balanced, top_level=False)
+def augment_directory(args):
+    files_count = dict()
+    augmentations_count = dict()
+    # count files
+    for root, dirs, files in os.walk(args.path):
+        assert dirs or files, f"{root} is empty"
+        assert not dirs or not files, f"{root} contains both files and directories"
+        if files:
+            num_files = (
+                round(len(files) * DEBUG_PERCENTAGE / 100) if args.debug else len(files)
+            )
+            files_count[root] = num_files
+            augmentations_count[root] = num_files * (len(AUGMENTATIONS) + 1)
+    # balance directories and augment files
+    for root, dirs, files in os.walk(args.path):
+        if files:
+            files = [
+                os.path.join(root, f) for f in random.sample(files, k=files_count[root])
+            ]
+            augmented_path = AUGMENTED_PREFIX + root
+            shutil.rmtree(augmented_path, ignore_errors=True)
+            os.makedirs(augmented_path, exist_ok=True)
+            augmentations = {f: [original] for f in files}
+            for f, augmentation in random.sample(
+                list(product(files, AUGMENTATIONS)),
+                k=augmentations_count[root] - files_count[root],
+            ):
+                augmentations[f].append(augmentation)
+            for f, a in augmentations.items():
+                augment_file(f, a)
+        elif args.balanced:
+            subdirs = [os.path.join(root, d) for d in dirs]
+            all_files = all(sd in files_count for sd in subdirs)
+            all_dirs = all(sd not in files_count for sd in subdirs)
+            assert all_files or all_dirs, f"failed to balance {root}"
+            if all_files:
+                min_count = min(map(files_count.get, subdirs))
+                for sd in subdirs:
+                    augmentations_count[sd] = max(
+                        files_count[sd], min_count * (len(AUGMENTATIONS) + 1)
+                    )
+    sys.exit(0)
 
 
 def parse_args():
@@ -117,13 +150,15 @@ def parse_args():
 
 def main():
     args = parse_args()
-    if os.path.exists(args.path):
-        augment_directory(
-            args.path, debug=args.debug, balanced=args.balanced, top_level=True
-        )
-    else:
+    if not os.path.exists(args.path):
         print(f"File not found: {args.path}")
         sys.exit(1)
+    elif os.path.isfile(args.path):
+        assert not args.debug, "--debug mode is incompatible with single file"
+        assert not args.balanced, "--balanced mode is incompatible with single file"
+        augment_file(args.path, AUGMENTATIONS)
+    else:
+        augment_directory(args)
 
 
 if __name__ == "__main__":

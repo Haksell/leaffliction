@@ -104,10 +104,11 @@ def parse_args():
         action="store_true",
         help=f"Take only {DEBUG_QUANTITY} images in each directory",
     )
-    # TODO: use Distribution.count_pics
-    # parser.add_argument(
-    #     "--balanced", action="store_true", help="Create directories with the same image count"
-    # )
+    parser.add_argument(
+        "--balanced",
+        action="store_true",
+        help="Create directories with the same image count",
+    )
     return parser.parse_args()
 
 

@@ -79,7 +79,7 @@ def augment_file(path, *, top_level):
         sys.exit(1)
 
 
-def augment_directory(path, *, debug_mode, top_level):
+def augment_directory(path, *, debug, balanced, top_level):
     if os.path.isfile(path):
         augment_file(path, top_level=top_level)
         return
@@ -91,11 +91,11 @@ def augment_directory(path, *, debug_mode, top_level):
     num_files = sum(map(os.path.isfile, files))
     remaining_files = round(num_files * DEBUG_PERCENTAGE / 100)
     for file in files:
-        if debug_mode and os.path.isfile(file):
+        if debug and os.path.isfile(file):
             if remaining_files == 0:
                 continue
             remaining_files -= 1
-        augment_directory(file, debug_mode=debug_mode, top_level=False)
+        augment_directory(file, debug=debug, balanced=balanced, top_level=False)
 
 
 def parse_args():
@@ -119,7 +119,9 @@ def parse_args():
 def main():
     args = parse_args()
     if os.path.exists(args.path):
-        augment_directory(args.path, debug_mode=args.debug, top_level=True)
+        augment_directory(
+            args.path, debug=args.debug, balanced=args.balanced, top_level=True
+        )
     else:
         print(f"File not found: {args.path}")
         sys.exit(1)

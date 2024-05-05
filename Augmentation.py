@@ -6,6 +6,7 @@ import sys
 from PIL import Image, ImageEnhance, ImageFilter
 
 
+DEBUG_QUANTITY = 5
 FLIPS = list(Image.Transpose)
 
 
@@ -87,7 +88,7 @@ def augment_directory(path, *, debug_mode, top_level):
     os.mkdir(augmented_path)
     files = os.listdir(path)
     random.shuffle(files)
-    for file in files[:5] if debug_mode else files:
+    for file in files[:DEBUG_QUANTITY] if debug_mode else files:
         augment_directory(
             os.path.join(path, file), debug_mode=debug_mode, top_level=False
         )
@@ -99,7 +100,9 @@ def parse_args():
         "path", type=str, help="Path of the file or directory to augment"
     )
     parser.add_argument(
-        "--debug", action="store_true", help="Take only 5 images in each directory"
+        "--debug",
+        action="store_true",
+        help=f"Take only {DEBUG_QUANTITY} images in each directory",
     )
     # TODO: use Distribution.count_pics
     # parser.add_argument(

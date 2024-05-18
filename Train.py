@@ -1,5 +1,3 @@
-# [0.7043, 0.9407, 0.9546, 0.9698, 0.9726, 0.9794, 0.9837, 0.9823, 0.9839, 0.9845]
-
 import pandas as pd
 import statistics
 from tensorflow import keras
@@ -57,7 +55,6 @@ model = keras.Sequential(
     ]
 )
 
-
 model.compile(
     optimizer=keras.optimizers.Adam(epsilon=0.01),
     loss="categorical_crossentropy",
@@ -75,7 +72,6 @@ history = model.fit(
     epochs=EPOCHS,
     callbacks=[checkpoint, lr_scheduler],
 )
-model.load_weights("best_model.keras")
 
 history_frame = pd.DataFrame(history.history)
 history_frame.loc[:, ["loss", "val_loss"]].plot()

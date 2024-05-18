@@ -5,3 +5,5 @@ __pycache__
 garbage.jpg
 garbage.png
 images.zip
+*.keras
+*.txt

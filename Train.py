@@ -10,7 +10,7 @@ MEAN_EPOCHS = 10
 assert EPOCHS % MEAN_EPOCHS == 0
 
 ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
-    "../input/images/images/apple",
+    "/kaggle/input/images/apple",
     labels="inferred",
     label_mode="categorical",
     image_size=(IMAGE_SIZE, IMAGE_SIZE),

@@ -10,7 +10,7 @@ EPOCHS = 100
 MEAN_EPOCHS = 10
 assert EPOCHS % MEAN_EPOCHS == 0
 
-ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
+ds_train, ds_rest = keras.preprocessing.image_dataset_from_directory(
     "../input/images/images/apple",
     labels="inferred",
     label_mode="categorical",
@@ -18,10 +18,13 @@ ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
     interpolation="nearest",
     batch_size=64,
     shuffle=True,
-    validation_split=0.2,
+    validation_split=0.3,
     subset="both",
     seed=42,
 )
+val_size = int(0.5 * len(ds_rest))
+ds_valid = ds_rest.take(val_size)
+ds_test = ds_rest.skip(val_size)
 
 model = keras.Sequential(
     [
@@ -76,3 +79,6 @@ print(
         for i in range(0, EPOCHS, MEAN_EPOCHS)
     ]
 )
+
+test_loss, test_accuracy = model.evaluate(ds_test)
+print(f"Test accuracy: {test_accuracy:.4f}")

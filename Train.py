@@ -8,9 +8,10 @@ CROP_SIZE = round(IMAGE_SIZE * 0.9)
 EPOCHS = 100
 MEAN_EPOCHS = 10
 assert EPOCHS % MEAN_EPOCHS == 0
+PLANT = "apple"
 
 ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
-    "/kaggle/input/images/apple",
+    f"/kaggle/input/images/{PLANT}",
     labels="inferred",
     label_mode="categorical",
     image_size=(IMAGE_SIZE, IMAGE_SIZE),
@@ -62,7 +63,7 @@ model.compile(
 )
 
 checkpoint = keras.callbacks.ModelCheckpoint(
-    "best_model.keras", save_best_only=True, monitor="val_loss", mode="min"
+    f"{PLANT}.keras", save_best_only=True, monitor="val_loss", mode="min"
 )
 lr_scheduler = keras.callbacks.LearningRateScheduler(lambda _, lr: lr * 0.97)
 

@@ -15,7 +15,7 @@ def plot_histogram(ax, data, title, colors, channel_names):
 
 def calculate_histogram(image):
     histograms = [cv2.calcHist([image], [i], None, [64], [0, 256]) for i in range(3)]
-    return [hist.ravel() / hist.sum() for hist in histograms]
+    return [h.flatten() / h.sum() for h in histograms]
 
 
 def transformations(image):

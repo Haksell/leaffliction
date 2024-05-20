@@ -6,7 +6,7 @@ image_path = "garbage.jpg"
 image, path, filename = pcv.readimage(filename=image_path)
 
 images = [image]
-kernel_sizes = [3, 5, 7, 9, 11]
+kernel_sizes = [3, 9, 15, 21, 27]
 for k in kernel_sizes:
     images.append(pcv.gaussian_blur(img=image, ksize=(k, k), sigma_x=0, sigma_y=None))
 

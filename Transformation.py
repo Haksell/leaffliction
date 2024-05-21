@@ -1,8 +1,8 @@
+import argparse
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from plantcv import plantcv as pcv
-import sys
 
 
 def pseudolandmarks_place_dots(img, dots, color):
@@ -107,12 +107,58 @@ def histogram(img):
     plt.tight_layout()
 
 
-def main():
-    # TODO: argparse
-    img = cv2.imread(sys.argv[1])
+def parse_args():
+    parser = argparse.ArgumentParser(description="Imaging processing")
+    parser.add_argument("--image", type=str, help="Path to a single image to process")
+    parser.add_argument("--src", help="Source directory")
+    parser.add_argument("--dst", help="Destination directory")
+    parser.add_argument(
+        "--transformation",
+        type=str,
+        choices=[
+            "mask",
+            "edge",
+            "background",
+            "analyze",
+            "pseudolandmarks",
+            "equalization",
+            "blur",
+            "clahe",
+        ],
+        help="Type of transformation to apply",
+    )
+    args = parser.parse_args()
+    present = [
+        args.image is not None,
+        args.src is not None,
+        args.dst is not None,
+        args.transformation is not None,
+    ]
+    is_file = present == [True, False, False, False]
+    is_directory = present == [False, True, True, True]
+    assert (
+        is_file or is_directory
+    ), "you should provide --image, or --src/--dst/--transformation"
+    return is_file, args
+
+
+def handle_file(filename):
+    img = cv2.imread(filename)
     transformations(img)
-    # histogram(img) TODO
+    histogram(img)
     plt.show()
+
+
+def handle_directory(src, dst, transformation):
+    raise NotImplementedError
+
+
+def main():
+    is_file, args = parse_args()
+    if is_file:
+        handle_file(args.image)
+    else:
+        handle_directory(args.src, args.dst, args.transformation)
 
 
 if __name__ == "__main__":

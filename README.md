@@ -2,9 +2,7 @@
 
 - [X] Part 1
 - [X] Part 2
-- [ ] Part 3: `argparse`
 - [ ] Part 3: handle directories
-- [ ] Part 3: execute transformations on images directory
 - [ ] Part 4: transform the image before giving it to the model (useless but that's the subject)
 - [ ] Part 4: try https://keras.io/api/keras_cv/losses/focal_loss/
 - [ ] Part 4: visualization with image, transformed image and prediction

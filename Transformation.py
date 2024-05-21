@@ -20,17 +20,20 @@ def transformation_analyze(image):
 
 def transformations(image):
     images = [
-        image,
-        pcv.gaussian_blur(img=image, ksize=(5, 5), sigma_x=0, sigma_y=None),
-        pcv.gaussian_blur(img=image, ksize=(9, 9), sigma_x=0, sigma_y=None),
-        pcv.gaussian_blur(img=image, ksize=(13, 13), sigma_x=0, sigma_y=None),
-        transformation_analyze(image),
-        pcv.gaussian_blur(img=image, ksize=(17, 17), sigma_x=0, sigma_y=None),
+        (image, "Original"),
+        (
+            pcv.gaussian_blur(img=image, ksize=(5, 5), sigma_x=0, sigma_y=None),
+            "Gaussian blur",
+        ),
+        (image, "Original"),
+        (image, "Original"),
+        (transformation_analyze(image), "Analyze object"),
+        (image, "Original"),
     ]
     _, axes = plt.subplots(2, 3, figsize=(12, 8))
-    for i, (ax, transformed) in enumerate(zip(axes.flat, images)):
+    for i, (ax, (transformed, title)) in enumerate(zip(axes.flat, images)):
         ax.imshow(cv2.cvtColor(transformed, cv2.COLOR_BGR2RGB))
-        ax.set_title(f"{i}")
+        ax.set_title(title)
     plt.tight_layout()
 
 

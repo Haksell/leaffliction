@@ -41,7 +41,7 @@ def transformations(img):
     images = [
         (img, "Original"),
         (pcv.gaussian_blur(img=img, ksize=(11, 11)), "Gaussian blur"),
-        (img, "Original"),
+        (pcv.apply_mask(img, mask, "black"), "Mask"),
         (img, "Original"),
         (pcv.analyze.size(img=img, labeled_mask=labeled_mask), "Analyze object"),
         (pseudolandmarks(img, mask), "Pseudolandmarks"),

@@ -4,12 +4,27 @@ from plantcv import plantcv as pcv
 import sys
 
 
+def transformation_analyze(image):
+    bin_img = pcv.threshold.dual_channels(
+        rgb_img=image,
+        x_channel="a",
+        y_channel="b",
+        points=[(80, 80), (125, 140)],
+        above=True,
+    )
+    mask = pcv.fill_holes(pcv.fill(bin_img=bin_img, size=50))
+    roi = pcv.roi.rectangle(img=image, x=0, y=0, h=image.shape[0], w=image.shape[1])
+    labeled_mask = pcv.roi.filter(mask=mask, roi=roi, roi_type="partial")
+    return pcv.analyze.size(img=image, labeled_mask=labeled_mask)
+
+
 def transformations(image):
     kernel_sizes = [1, 5, 9, 13, 17, 21]
     images = [
         pcv.gaussian_blur(img=image, ksize=(k, k), sigma_x=0, sigma_y=None)
-        for k in kernel_sizes
+        for k in kernel_sizes[:-1]
     ]
+    images.append(transformation_analyze(image))
     _, axes = plt.subplots(2, 3)
     for i, ax in enumerate(axes.flat):
         ax.axis("off")

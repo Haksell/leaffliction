@@ -120,6 +120,7 @@ def parse_args():
             "edge",
             "background",
             "analyze",
+            "original",
             "pseudolandmarks",
             "equalization",
             "blur",

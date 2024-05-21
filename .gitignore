@@ -1,12 +1,7 @@
 /images
-/tiny_images
-/clahe_*
-/augmented_*
-/mask_*
+/*_images
 __pycache__
-garbage*
 *.zip
 *.keras
 *.classes
 .ipynb_checkpoints
-00_*

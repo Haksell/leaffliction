@@ -52,7 +52,6 @@ def transformation_original(img, _):
     return img
 
 
-# TODO: better pseudolandmarks
 @gen_mask
 def transformation_pseudolandmarks(img, mask):
     def pseudolandmarks_place_dots(dots, color):

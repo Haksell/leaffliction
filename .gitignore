@@ -8,3 +8,4 @@ garbage.png
 *.keras
 *.txt
 .ipynb_checkpoints
+00_*

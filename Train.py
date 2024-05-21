@@ -1,3 +1,4 @@
+import json
 import os
 import pandas as pd
 import statistics
@@ -6,16 +7,21 @@ from tensorflow import keras
 IMAGE_SIZE = 64
 CROP_SIZE = round(IMAGE_SIZE * 0.9)
 EPOCHS = 100
+LEARNING_RATE_DECAY = 0.97
 MEAN_EPOCHS = 10
 assert EPOCHS % MEAN_EPOCHS == 0
 PLANT = "apple"
-DIR = f"images/{PLANT}"
-NUM_CLASSES = len(next(os.walk(DIR))[1])
+KAGGLE = False
+DIR = f"/kaggle/input/clahe-images/{PLANT}" if KAGGLE else f"clahe_images/{PLANT}"
+CLASS_NAMES = sorted(os.listdir(DIR))
+
+json.dump(CLASS_NAMES, open(f"{PLANT}.classes", "w"))
 
 ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
     DIR,
     labels="inferred",
     label_mode="categorical",
+    class_names=CLASS_NAMES,
     image_size=(IMAGE_SIZE, IMAGE_SIZE),
     interpolation="nearest",
     batch_size=64,
@@ -27,7 +33,7 @@ ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
 
 model = keras.Sequential(
     [
-        keras.layers.InputLayer(input_shape=[IMAGE_SIZE, IMAGE_SIZE, 3]),
+        keras.layers.InputLayer(shape=[IMAGE_SIZE, IMAGE_SIZE, 3]),
         # Data Augmentation
         keras.layers.RandomContrast(factor=0.1),
         keras.layers.RandomFlip(mode="horizontal_and_vertical"),
@@ -55,7 +61,7 @@ model = keras.Sequential(
         keras.layers.Flatten(),
         keras.layers.Dense(128, activation="relu"),
         keras.layers.Dropout(0.5),
-        keras.layers.Dense(NUM_CLASSES, activation="softmax"),
+        keras.layers.Dense(len(CLASS_NAMES), activation="softmax"),
     ]
 )
 
@@ -68,7 +74,9 @@ model.compile(
 checkpoint = keras.callbacks.ModelCheckpoint(
     f"{PLANT}.keras", save_best_only=True, monitor="val_loss", mode="min"
 )
-lr_scheduler = keras.callbacks.LearningRateScheduler(lambda _, lr: lr * 0.97)
+lr_scheduler = keras.callbacks.LearningRateScheduler(
+    lambda _, lr: lr * LEARNING_RATE_DECAY
+)
 
 history = model.fit(
     ds_train,
@@ -81,9 +89,6 @@ history_frame = pd.DataFrame(history.history)
 history_frame.loc[:, ["loss", "val_loss"]].plot()
 history_frame.loc[:, ["accuracy", "val_accuracy"]].plot()
 
-print(
-    [
-        round(statistics.mean(history.history["val_accuracy"][i : i + MEAN_EPOCHS]), 4)
-        for i in range(0, EPOCHS, MEAN_EPOCHS)
-    ]
-)
+for i in range(0, EPOCHS, MEAN_EPOCHS):
+    acc = statistics.mean(history.history["val_accuracy"][i : i + MEAN_EPOCHS])
+    print(f"Validation accuracy after {i + MEAN_EPOCHS} steps: {acc:.3f}")

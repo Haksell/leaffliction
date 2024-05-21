@@ -1,7 +1,9 @@
 /garbage
 /ooga
 /images
+/images_tiny
 /augmented*
+/mask_*
 __pycache__
 garbage.jpg
 garbage.png

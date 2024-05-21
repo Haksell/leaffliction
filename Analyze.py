@@ -7,6 +7,7 @@ pcv.params.text_thickness = 20
 
 img, _, _ = pcv.readimage(filename=sys.argv[1])
 
+# TODO: more robust binary image
 thresh1 = pcv.threshold.dual_channels(
     rgb_img=img,
     x_channel="a",

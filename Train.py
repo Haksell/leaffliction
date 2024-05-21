@@ -1,17 +1,19 @@
+import os
 import pandas as pd
 import statistics
 from tensorflow import keras
 
-NUM_CLASSES = 4  # TODO: automatically from image_dataset_from_directory
 IMAGE_SIZE = 64
 CROP_SIZE = round(IMAGE_SIZE * 0.9)
 EPOCHS = 100
 MEAN_EPOCHS = 10
 assert EPOCHS % MEAN_EPOCHS == 0
 PLANT = "apple"
+DIR = f"images/{PLANT}"
+NUM_CLASSES = len(next(os.walk(DIR))[1])
 
 ds_train, ds_valid = keras.preprocessing.image_dataset_from_directory(
-    f"/kaggle/input/images/{PLANT}",
+    DIR,
     labels="inferred",
     label_mode="categorical",
     image_size=(IMAGE_SIZE, IMAGE_SIZE),
@@ -34,6 +36,7 @@ model = keras.Sequential(
         keras.layers.RandomTranslation(height_factor=0.1, width_factor=0.1),
         keras.layers.RandomBrightness(factor=0.1),
         keras.layers.RandomCrop(height=CROP_SIZE, width=CROP_SIZE),
+        keras.layers.Rescaling(scale=1 / 127.5, offset=-1),
         # Block One
         keras.layers.BatchNormalization(),
         keras.layers.Conv2D(64, kernel_size=3, activation="relu", padding="same"),

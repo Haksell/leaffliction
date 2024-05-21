@@ -7,5 +7,6 @@
 - [ ] Part 4: try https://keras.io/api/keras_cv/losses/focal_loss/
 - [ ] Part 4: visualization with image, transformed image and prediction
 - [ ] Part 4: fix `Predict.py` (class names instead of `np.argmax`)
+- [ ] Part 4: remove warnings
 - [ ] small images folder
 - [ ] zip images, augmented_images, transformed_images, apple.keras, grape.keras, class names and push sha1sum

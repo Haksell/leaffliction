@@ -17,6 +17,7 @@ def pseudolandmarks_place_dots(img, dots, color):
         )
 
 
+# TODO: better pseudolandmarks
 def pseudolandmarks(img, mask):
     left, right, center = pcv.homology.y_axis_pseudolandmarks(img=img, mask=mask)
     img = np.copy(img)
@@ -26,27 +27,37 @@ def pseudolandmarks(img, mask):
     return img
 
 
+def contrast_limited_adaptive_histogram_equalization(img):
+    light, a, b = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2LAB))
+    light = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(light)
+    return cv2.cvtColor(cv2.merge((light, a, b)), cv2.COLOR_LAB2BGR)
+
+
 def transformations(img):
+    clahe = contrast_limited_adaptive_histogram_equalization(img)
     bin_img = pcv.threshold.dual_channels(
-        rgb_img=img,
+        rgb_img=clahe,
         x_channel="a",
         y_channel="b",
-        points=[(80, 80), (125, 140)],
-        above=True,
+        points=[(75, 75), (130, 145)],
     )
     mask = pcv.fill_holes(pcv.fill(bin_img=bin_img, size=50))
+    masked = pcv.apply_mask(img, mask, "black")
     roi = pcv.roi.rectangle(img=img, x=0, y=0, h=img.shape[0], w=img.shape[1])
     labeled_mask = pcv.roi.filter(mask=mask, roi=roi, roi_type="partial")
 
     images = [
+        (masked, "Mask"),
+        (pcv.canny_edge_detect(masked, sigma=1.3), "Canny edge detection"),
+        (pcv.apply_mask(img, 255 - mask, "black"), "Background"),
+        (pcv.analyze.size(img, labeled_mask), "Analyze object"),
         (img, "Original"),
-        (pcv.gaussian_blur(img=img, ksize=(11, 11)), "Gaussian blur"),
-        (pcv.apply_mask(img, mask, "black"), "Mask"),
-        (img, "Original"),
-        (pcv.analyze.size(img=img, labeled_mask=labeled_mask), "Analyze object"),
         (pseudolandmarks(img, mask), "Pseudolandmarks"),
+        (pcv.hist_equalization(pcv.rgb2gray(img)), "Histogram equalization"),
+        (pcv.gaussian_blur(img, ksize=(11, 11)), "Gaussian blur"),
+        (clahe, "CLAHE"),
     ]
-    _, axes = plt.subplots(2, 3, figsize=(12, 8))
+    _, axes = plt.subplots(3, 3, figsize=(10, 10))
     for ax, (transformed, title) in zip(axes.flat, images):
         ax.imshow(cv2.cvtColor(transformed, cv2.COLOR_BGR2RGB))
         ax.set_title(title)

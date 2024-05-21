@@ -1,4 +1,5 @@
 import argparse
+from functools import wraps
 import os
 import shutil
 import cv2
@@ -7,14 +8,36 @@ import numpy as np
 from plantcv import plantcv as pcv
 
 
-def transformation_masked(img, mask):
+def get_mask(img):
+    clahe = transformation_clahe(img, None)
+    bin_img = pcv.threshold.dual_channels(
+        rgb_img=clahe,
+        x_channel="a",
+        y_channel="b",
+        points=[(70, 70), (135, 150)],
+    )
+    return pcv.fill_holes(pcv.fill(bin_img=bin_img, size=50))
+
+
+def gen_mask(func):
+    @wraps(func)
+    def wrapper(img, mask):
+        return func(img, get_mask(img) if mask is None else mask)
+
+    return wrapper
+
+
+@gen_mask
+def transformation_mask(img, mask):
     return pcv.apply_mask(img, mask, "black")
 
 
+@gen_mask
 def transformation_canny(img, mask):
     return pcv.canny_edge_detect(pcv.apply_mask(img, mask, "black"), sigma=1.3)
 
 
+@gen_mask
 def transformation_background(img, mask):
     return pcv.apply_mask(img, 255 - mask, "black")
 
@@ -30,6 +53,7 @@ def transformation_original(img, _):
 
 
 # TODO: better pseudolandmarks
+@gen_mask
 def transformation_pseudolandmarks(img, mask):
     def pseudolandmarks_place_dots(dots, color):
         for pos in dots:
@@ -50,43 +74,51 @@ def transformation_pseudolandmarks(img, mask):
     return cpy
 
 
+def transformation_equalization(img, _):
+    return pcv.hist_equalization(pcv.rgb2gray(img))
+
+
+def transformation_blur(img, _):
+    return pcv.gaussian_blur(img, ksize=(11, 11))
+
+
 def transformation_clahe(img, _):
     light, a, b = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2LAB))
     light = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8)).apply(light)
     return cv2.cvtColor(cv2.merge((light, a, b)), cv2.COLOR_LAB2BGR)
 
 
-def transformations(img):
-    clahe = transformation_clahe(img, None)
-    bin_img = pcv.threshold.dual_channels(
-        rgb_img=clahe,
-        x_channel="a",
-        y_channel="b",
-        points=[(75, 75), (130, 145)],
-    )
-    mask = pcv.fill_holes(pcv.fill(bin_img=bin_img, size=50))
+TRANSFORMATIONS = [
+    (transformation_mask, "Mask"),
+    (transformation_canny, "Canny edge detection"),
+    (transformation_background, "Background"),
+    (transformation_analyze, "Analyze object"),
+    (transformation_original, "Original"),
+    (transformation_pseudolandmarks, "Pseudolandmarks"),
+    (transformation_equalization, "Histogram equalization"),
+    (transformation_blur, "Gaussian blur"),
+    (transformation_clahe, "CLAHE"),
+]
 
-    images = [
-        (transformation_masked(img, mask), "Mask"),
-        (transformation_canny(img, mask), "Canny edge detection"),
-        (transformation_background(img, mask), "Background"),
-        (transformation_analyze(img, mask), "Analyze object"),
-        (transformation_original(img, mask), "Original"),
-        (transformation_pseudolandmarks(img, mask), "Pseudolandmarks"),
-        (pcv.hist_equalization(pcv.rgb2gray(img)), "Histogram equalization"),
-        (pcv.gaussian_blur(img, ksize=(11, 11)), "Gaussian blur"),
-        (clahe, "CLAHE"),
-    ]
+
+def transformations(img):
+    mask = get_mask(img)
     _, axes = plt.subplots(3, 3, figsize=(10, 10))
-    for ax, (transformed, title) in zip(axes.flat, images):
-        ax.imshow(cv2.cvtColor(transformed, cv2.COLOR_BGR2RGB))
+    for ax, (transformation, title) in zip(axes.flat, TRANSFORMATIONS):
+        ax.imshow(cv2.cvtColor(transformation(img, mask), cv2.COLOR_BGR2RGB))
         ax.set_title(title)
     plt.tight_layout()
 
 
 def plot_histogram(ax, img, colorspace, title, colors, channel_names):
     histograms = [
-        cv2.calcHist([cv2.cvtColor(img, colorspace)], [i], None, [64], [0, 256])
+        cv2.calcHist(
+            [cv2.cvtColor(img, colorspace) if colorspace else img],
+            [i],
+            None,
+            [64],
+            [0, 256],
+        )
         for i in range(3)
     ]
     data = [h.flatten() / h.sum() for h in histograms]
@@ -111,7 +143,7 @@ def histogram(img):
     plot_histogram(
         axes[1],
         img,
-        cv2.COLOR_RGB2HSV,
+        cv2.COLOR_BGR2HSV,
         "HSV Histogram",
         ["purple", "cyan", "orange"],
         ["Hue", "Saturation", "Value"],
@@ -119,7 +151,7 @@ def histogram(img):
     plot_histogram(
         axes[2],
         img,
-        cv2.COLOR_RGB2LAB,
+        cv2.COLOR_BGR2LAB,
         "LAB Histogram",
         ["gray", "magenta", "yellow"],
         ["L*", "a*", "b*"],
@@ -136,15 +168,7 @@ def parse_args():
         "--transformation",
         type=str,
         choices=[
-            "mask",
-            "edge",
-            "background",
-            "analyze",
-            "original",
-            "pseudolandmarks",
-            "equalization",
-            "blur",
-            "clahe",
+            f.__name__.removeprefix("transformation_") for f, _ in TRANSFORMATIONS
         ],
         help="Type of transformation to apply",
     )
@@ -160,6 +184,8 @@ def parse_args():
     assert (
         is_file or is_directory
     ), "you should provide --image, or --src/--dst/--transformation"
+    assert args.src is None or "/" not in args.src
+    assert args.dst is None or "/" not in args.dst
     return is_file, args
 
 
@@ -171,12 +197,17 @@ def handle_file(filename):
 
 
 def handle_directory(src, dst, transformation):
+    transformation = eval(f"transformation_{transformation}")
     assert os.path.isdir(src)
     shutil.rmtree(dst, ignore_errors=True)
     os.makedirs(dst, exist_ok=True)
-    assert all(map(os.path.isfile, os.listdir(src)))
-    for file in os.listdir(src):
-        print(file)
+    for root_src, dirs, files in os.walk(src):
+        root_dst = root_src.replace(src, dst)
+        for d in dirs:
+            os.makedirs(os.path.join(root_dst, d), exist_ok=True)
+        for f in files:
+            img = cv2.imread(os.path.join(root_src, f))
+            cv2.imwrite(os.path.join(root_dst, f), transformation(img, None))
 
 
 def main():

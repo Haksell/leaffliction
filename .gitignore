@@ -1,4 +1,5 @@
 /garbage
+/ooga
 /images
 /augmented*
 __pycache__
@@ -11,3 +12,4 @@ garbage_*.jpg
 .ipynb_checkpoints
 00_*
 lol.py
+images.zip

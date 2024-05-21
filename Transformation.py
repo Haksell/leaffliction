@@ -19,17 +19,18 @@ def transformation_analyze(image):
 
 
 def transformations(image):
-    kernel_sizes = [1, 5, 9, 13, 17, 21]
     images = [
-        pcv.gaussian_blur(img=image, ksize=(k, k), sigma_x=0, sigma_y=None)
-        for k in kernel_sizes[:-1]
+        image,
+        pcv.gaussian_blur(img=image, ksize=(5, 5), sigma_x=0, sigma_y=None),
+        pcv.gaussian_blur(img=image, ksize=(9, 9), sigma_x=0, sigma_y=None),
+        pcv.gaussian_blur(img=image, ksize=(13, 13), sigma_x=0, sigma_y=None),
+        transformation_analyze(image),
+        pcv.gaussian_blur(img=image, ksize=(17, 17), sigma_x=0, sigma_y=None),
     ]
-    images.append(transformation_analyze(image))
-    _, axes = plt.subplots(2, 3)
-    for i, ax in enumerate(axes.flat):
-        ax.axis("off")
-        ax.imshow(cv2.cvtColor(images[i], cv2.COLOR_BGR2RGB))
-        ax.set_title(f"Gaussian Blur {kernel_sizes[i-1]}x{kernel_sizes[i-1]}")
+    _, axes = plt.subplots(2, 3, figsize=(12, 8))
+    for i, (ax, transformed) in enumerate(zip(axes.flat, images)):
+        ax.imshow(cv2.cvtColor(transformed, cv2.COLOR_BGR2RGB))
+        ax.set_title(f"{i}")
     plt.tight_layout()
 
 

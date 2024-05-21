@@ -1,7 +1,7 @@
 # TODO
 
 - [X] Part 1
-- [ ] Part 2: if only one image is given, plot the data augmentations
+- [X] Part 2
 - [ ] Part 3: `argparse`
 - [ ] Part 3: handle directories
 - [ ] Part 3: execute transformations on images directory

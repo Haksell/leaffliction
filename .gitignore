@@ -4,6 +4,7 @@
 __pycache__
 garbage.jpg
 garbage.png
+garbage_*.jpg
 *.zip
 *.keras
 *.txt

@@ -5,6 +5,7 @@ import random
 import shutil
 import sys
 from PIL import Image, ImageEnhance, ImageFilter
+from matplotlib import pyplot as plt
 
 
 DEBUG_PERCENTAGE = 2
@@ -70,20 +71,25 @@ def save(img, path, augmentation, *, single_file):
 
 def augment_file(path, augmentations):
     single_file = original not in augmentations
+    subplots = []
     try:
         with Image.open(path) as img:
             img.verify()
         with Image.open(path) as img:
             for augmentation in augmentations:
-                save(
-                    augmentation(img),
-                    path,
-                    augmentation.__name__,
-                    single_file=single_file,
-                )
+                augmented = augmentation(img)
+                save(augmented, path, augmentation.__name__, single_file=single_file)
+                subplots.append((augmented, augmentation.__name__))
     except (IOError, SyntaxError) as e:
         print(f"Error loading image {path}: {e}")
         sys.exit(1)
+    if single_file:
+        _, axes = plt.subplots(2, 3, figsize=(12, 8))
+        for ax, (subplot, title) in zip(axes.flat, subplots):
+            ax.imshow(subplot)
+            ax.set_title(title)
+        plt.tight_layout()
+        plt.show()
 
 
 def augment_directory(args):

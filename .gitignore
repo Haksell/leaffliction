@@ -8,6 +8,7 @@ garbage_*.jpg
 *.zip
 *.keras
 *.txt
+!requirements.txt
 .ipynb_checkpoints
 00_*
 lol.py

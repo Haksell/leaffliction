@@ -16,7 +16,11 @@ assert EPOCHS % MEAN_EPOCHS == 0
 
 def main():
     PLANT = "apple"
-    DIR = f"/kaggle/input/clahe-images/{PLANT}" if KAGGLE else f"clahe_images/{PLANT}"
+    DIR = (
+        f"/kaggle/input/clahe-images/{PLANT}"
+        if KAGGLE
+        else f"clahe_images/{PLANT}"
+    )
     CLASS_NAMES = sorted(os.listdir(DIR))
 
     json.dump(CLASS_NAMES, open(f"{PLANT}.classes", "w"))
@@ -43,22 +47,32 @@ def main():
             keras.layers.RandomFlip(mode="horizontal_and_vertical"),
             keras.layers.RandomRotation(factor=0.1),
             keras.layers.RandomZoom(height_factor=0.1, width_factor=0.1),
-            keras.layers.RandomTranslation(height_factor=0.1, width_factor=0.1),
+            keras.layers.RandomTranslation(
+                height_factor=0.1, width_factor=0.1
+            ),
             keras.layers.RandomBrightness(factor=0.1),
             keras.layers.RandomCrop(height=CROP_SIZE, width=CROP_SIZE),
             keras.layers.Rescaling(scale=1 / 127.5, offset=-1),
             # Block One
             keras.layers.BatchNormalization(),
-            keras.layers.Conv2D(64, kernel_size=3, activation="relu", padding="same"),
+            keras.layers.Conv2D(
+                64, kernel_size=3, activation="relu", padding="same"
+            ),
             keras.layers.MaxPool2D(),
             # Block Two
             keras.layers.BatchNormalization(),
-            keras.layers.Conv2D(128, kernel_size=3, activation="relu", padding="same"),
+            keras.layers.Conv2D(
+                128, kernel_size=3, activation="relu", padding="same"
+            ),
             keras.layers.MaxPool2D(),
             # Block Three
             keras.layers.BatchNormalization(),
-            keras.layers.Conv2D(256, kernel_size=3, activation="relu", padding="same"),
-            keras.layers.Conv2D(256, kernel_size=3, activation="relu", padding="same"),
+            keras.layers.Conv2D(
+                256, kernel_size=3, activation="relu", padding="same"
+            ),
+            keras.layers.Conv2D(
+                256, kernel_size=3, activation="relu", padding="same"
+            ),
             keras.layers.MaxPool2D(),
             # Head
             keras.layers.BatchNormalization(),
@@ -93,9 +107,10 @@ def main():
     history_frame.loc[:, ["loss", "val_loss"]].plot()
     history_frame.loc[:, ["accuracy", "val_accuracy"]].plot()
 
-    for i in range(0, EPOCHS, MEAN_EPOCHS):
-        acc = statistics.mean(history.history["val_accuracy"][i : i + MEAN_EPOCHS])
-        print(f"Validation accuracy after {i + MEAN_EPOCHS} steps: {acc:.3f}")
+    for start in range(0, EPOCHS, MEAN_EPOCHS):
+        end = start + MEAN_EPOCHS
+        acc = statistics.mean(history.history["val_accuracy"][start:end])
+        print(f"Validation accuracy after {end} steps: {acc:.3f}")
 
 
 if __name__ == "__main__":

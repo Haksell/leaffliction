@@ -65,7 +65,9 @@ def transformation_pseudolandmarks(img, mask):
                 lineType=cv2.LINE_AA,
             )
 
-    left, right, center = pcv.homology.y_axis_pseudolandmarks(img=img, mask=mask)
+    left, right, center = pcv.homology.y_axis_pseudolandmarks(
+        img=img, mask=mask
+    )
     cpy = np.copy(img)
     pseudolandmarks_place_dots(left, (255, 0, 0))
     pseudolandmarks_place_dots(right, (255, 0, 255))
@@ -165,7 +167,9 @@ def histogram(img):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Imaging processing")
-    parser.add_argument("--image", type=str, help="Path to a single image to process")
+    parser.add_argument(
+        "--image", type=str, help="Path to a single image to process"
+    )
     parser.add_argument("--src", help="Source directory")
     parser.add_argument("--dst", help="Destination directory")
     parser.add_argument(

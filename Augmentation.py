@@ -36,7 +36,9 @@ def zoom(img):
 
 def random_dissimilar():
     return (
-        random.uniform(0.4, 0.8) if random.random() < 0.5 else random.uniform(1.25, 2.5)
+        random.uniform(0.4, 0.8)
+        if random.random() < 0.5
+        else random.uniform(1.25, 2.5)
     )
 
 
@@ -78,7 +80,12 @@ def augment_file(path, augmentations):
         with Image.open(path) as img:
             for augmentation in augmentations:
                 augmented = augmentation(img)
-                save(augmented, path, augmentation.__name__, single_file=single_file)
+                save(
+                    augmented,
+                    path,
+                    augmentation.__name__,
+                    single_file=single_file,
+                )
                 subplots.append((augmented, augmentation.__name__))
     except (IOError, SyntaxError) as e:
         print(f"Error loading image {path}: {e}")
@@ -98,10 +105,14 @@ def augment_directory(args):
     # count files
     for root, dirs, files in os.walk(args.path):
         assert dirs or files, f"{root} is empty"
-        assert not dirs or not files, f"{root} contains both files and directories"
+        assert (
+            not dirs or not files
+        ), f"{root} contains both files and directories"
         if files:
             num_files = (
-                round(len(files) * DEBUG_PERCENTAGE / 100) if args.debug else len(files)
+                round(len(files) * DEBUG_PERCENTAGE / 100)
+                if args.debug
+                else len(files)
             )
             files_count[root] = num_files
             augmentations_count[root] = num_files * (len(AUGMENTATIONS) + 1)
@@ -109,7 +120,8 @@ def augment_directory(args):
     for root, dirs, files in os.walk(args.path):
         if files:
             files = [
-                os.path.join(root, f) for f in random.sample(files, k=files_count[root])
+                os.path.join(root, f)
+                for f in random.sample(files, k=files_count[root])
             ]
             augmented_path = AUGMENTED_PREFIX + root
             shutil.rmtree(augmented_path, ignore_errors=True)
@@ -161,7 +173,9 @@ def main():
         sys.exit(1)
     elif os.path.isfile(args.path):
         assert not args.debug, "--debug mode is incompatible with single file"
-        assert not args.balanced, "--balanced mode is incompatible with single file"
+        assert (
+            not args.balanced
+        ), "--balanced mode is incompatible with single file"
         augment_file(args.path, AUGMENTATIONS)
     else:
         augment_directory(args)

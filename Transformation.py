@@ -21,10 +21,7 @@ def transformation_analyze(image):
 def transformations(image):
     images = [
         (image, "Original"),
-        (
-            pcv.gaussian_blur(img=image, ksize=(5, 5), sigma_x=0, sigma_y=None),
-            "Gaussian blur",
-        ),
+        (pcv.gaussian_blur(img=image, ksize=(11, 11)), "Gaussian blur"),
         (image, "Original"),
         (image, "Original"),
         (transformation_analyze(image), "Analyze object"),

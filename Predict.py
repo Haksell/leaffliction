@@ -1,7 +1,6 @@
 import argparse
 import cv2
 import json
-from matplotlib import pyplot as plt
 import numpy as np
 from tensorflow import keras
 from Train import IMAGE_SIZE
@@ -31,6 +30,19 @@ def parse_args():
     return parser.parse_args()
 
 
+def plot(img, transformed, prediction):
+    from matplotlib import pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 6))
+    axes[0].imshow(img)
+    axes[0].set_title("original")
+    axes[1].imshow(transformed)
+    axes[1].set_title("transformed")
+    fig.suptitle(f"Predicted: {prediction}", fontsize=16)
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
     args = parse_args()
     transformation = eval(f"Transformation.transformation_{args.transformation}")
@@ -44,14 +56,7 @@ def main():
         prediction = classes[np.argmax(predictions)]
         print(f"{filename:<{padding}}: predicted {prediction}")
         if len(args.filenames) == 1:
-            fig, axes = plt.subplots(1, 2, figsize=(10, 6))
-            axes[0].imshow(img)
-            axes[0].set_title("original")
-            axes[1].imshow(transformed)
-            axes[1].set_title("transformed")
-            fig.suptitle(f"Predicted: {prediction}", fontsize=16)
-            plt.tight_layout()
-            plt.show()
+            plot(img, transformed, prediction)
 
 
 if __name__ == "__main__":

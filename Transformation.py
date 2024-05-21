@@ -31,7 +31,7 @@ def transformations(image):
         (image, "Original"),
     ]
     _, axes = plt.subplots(2, 3, figsize=(12, 8))
-    for i, (ax, (transformed, title)) in enumerate(zip(axes.flat, images)):
+    for ax, (transformed, title) in zip(axes.flat, images):
         ax.imshow(cv2.cvtColor(transformed, cv2.COLOR_BGR2RGB))
         ax.set_title(title)
     plt.tight_layout()

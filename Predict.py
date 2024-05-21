@@ -1,24 +1,58 @@
-from tensorflow import keras
+import argparse
+import cv2
+import json
+from matplotlib import pyplot as plt
 import numpy as np
-from PIL import Image
-import sys
+from tensorflow import keras
+from Train import IMAGE_SIZE
+import Transformation  # noqa
+from Transformation import TRANSFORMATION_CHOICES, TRANSFORMATION_IDENTITY
 
 
-def load_and_preprocess_image(image_path, image_size):
-    image = Image.open(image_path)
-    image = image.resize((image_size, image_size))
-    image = np.array(image)
-    image = image / 255.0
-    return image
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "filenames", nargs="+", type=str, help="Filenames of the image to predict"
+    )
+    parser.add_argument(
+        "--plant",
+        type=str,
+        choices=["apple", "grape"],
+        help="Type of image to predict",
+        required=True,
+    )
+    parser.add_argument(
+        "--transformation",
+        type=str,
+        choices=TRANSFORMATION_CHOICES,
+        default=TRANSFORMATION_IDENTITY,
+        help="Type of transformation to apply",
+    )
+    return parser.parse_args()
 
 
-def main(image_path):
-    model = keras.models.load_model("best_model.keras")  # MODEL_FILENAME
-    processed_image = load_and_preprocess_image(image_path, 64)  # IMAGE_SIZE
-    predictions = model.predict(np.expand_dims(processed_image, axis=0))
-    prediction = np.argmax(predictions)
-    print(f"Predicted class: {prediction}")
+def main():
+    args = parse_args()
+    transformation = eval(f"Transformation.transformation_{args.transformation}")
+    classes = json.load(open(f"{args.plant}.classes"))
+    model = keras.models.load_model(f"{args.plant}.keras")
+    padding = max(map(len, args.filenames))
+    for filename in args.filenames:
+        img = cv2.cvtColor(cv2.imread(filename), cv2.COLOR_BGR2RGB)
+        transformed = transformation(cv2.resize(img, (IMAGE_SIZE, IMAGE_SIZE)), None)
+        predictions = model.predict(np.expand_dims(transformed, axis=0), verbose=0)
+        prediction = classes[np.argmax(predictions)]
+        print(f"{filename:<{padding}}: predicted {prediction}")
+        if len(args.filenames) == 1:
+            fig, axes = plt.subplots(1, 2, figsize=(10, 6))
+            axes[0].imshow(img)
+            axes[0].set_title("original")
+            axes[1].imshow(transformed)
+            axes[1].set_title("transformed")
+            fig.suptitle(f"Predicted: {prediction}", fontsize=16)
+            plt.tight_layout()
+            plt.show()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main()

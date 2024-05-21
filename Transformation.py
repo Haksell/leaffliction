@@ -98,6 +98,11 @@ TRANSFORMATIONS = [
     (transformation_blur, "Gaussian blur"),
     (transformation_clahe, "CLAHE"),
 ]
+TRANSFORMATION_CHOICES = [
+    f.__name__.removeprefix("transformation_") for f, _ in TRANSFORMATIONS
+]
+TRANSFORMATION_IDENTITY = "original"
+assert TRANSFORMATION_IDENTITY in TRANSFORMATION_CHOICES
 
 
 def transformations(img):
@@ -166,9 +171,7 @@ def parse_args():
     parser.add_argument(
         "--transformation",
         type=str,
-        choices=[
-            f.__name__.removeprefix("transformation_") for f, _ in TRANSFORMATIONS
-        ],
+        choices=TRANSFORMATION_CHOICES,
         help="Type of transformation to apply",
     )
     args = parser.parse_args()

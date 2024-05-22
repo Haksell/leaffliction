@@ -3,8 +3,8 @@ import cv2
 import json
 import numpy as np
 from tensorflow import keras
-from Train import IMAGE_SIZE
-import Transformation
+from train import IMAGE_SIZE
+import transformation
 
 
 def parse_args():
@@ -25,8 +25,8 @@ def parse_args():
     parser.add_argument(
         "--transformation",
         type=str,
-        choices=Transformation.TRANSFORMATION_CHOICES,
-        default=Transformation.TRANSFORMATION_IDENTITY,
+        choices=transformation.TRANSFORMATION_CHOICES,
+        default=transformation.TRANSFORMATION_IDENTITY,
         help="Type of transformation to apply",
     )
     return parser.parse_args()

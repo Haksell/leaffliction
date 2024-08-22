@@ -1,6 +1,6 @@
 #/bin/sh
 
-wget https://cdn.intra.42.fr/document/document/17547/leaves.zip
+wget --no-check-certificate https://cdn.intra.42.fr/document/document/17547/leaves.zip
 unzip leaves.zip
 rm -rf leaves.zip
 
